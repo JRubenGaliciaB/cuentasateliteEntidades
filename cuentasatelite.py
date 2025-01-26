@@ -19,9 +19,9 @@ years = list(df.columns[1:])  # Ignorar la columna Descriptor
 
 # Inicializar el estado de sesión para los filtros
 if 'selected_descriptors' not in st.session_state:
-    st.session_state.selected_descriptors = descriptors[:1]
+    st.session_state.selected_descriptors = []
 if 'selected_years' not in st.session_state:
-    st.session_state.selected_years = years
+    st.session_state.selected_years = []
 
 # Selección de filtros en la barra lateral
 st.sidebar.header("Configuración de visualización")
@@ -31,10 +31,11 @@ graph_type = st.sidebar.selectbox("Selecciona el tipo de gráfica", ["Barras", "
 
 # Botón para limpiar filtros
 if st.sidebar.button("Limpiar Filtros"):
-    st.session_state.selected_descriptors = descriptors[:1]
-    st.session_state.selected_years = years
-    selected_descriptors = st.session_state.selected_descriptors
-    selected_years = st.session_state.selected_years
+    # Restablecer los filtros y eliminar los datos de la gráfica
+    st.session_state.selected_descriptors = []
+    st.session_state.selected_years = []
+    selected_descriptors = []
+    selected_years = []
 
 # Filtrar datos
 filtered_data = df[df["Descriptor"].isin(selected_descriptors)]
@@ -45,7 +46,7 @@ melted_data = filtered_data.melt(id_vars="Descriptor", var_name="Año", value_na
 
 # Visualización
 st.subheader("Visualización de datos")
-if not melted_data.empty:
+if selected_descriptors and selected_years and not melted_data.empty:
     if graph_type == "Barras":
         fig = px.bar(
             melted_data,
@@ -85,7 +86,8 @@ if not melted_data.empty:
     # Mostrar la gráfica en Streamlit
     st.plotly_chart(fig, use_container_width=True)
 else:
-    st.write("No hay datos disponibles para mostrar con los filtros seleccionados.")
+    if selected_descriptors or selected_years:
+        st.write("No hay datos disponibles para mostrar con los filtros seleccionados.")
 
 # Botón para agrupar por años
 if st.sidebar.button("Agrupar por Años"):
@@ -96,4 +98,5 @@ if st.sidebar.button("Agrupar por Años"):
 # Botón para agrupar por subsectores
 if st.sidebar.button("Agrupar por Subsectores"):
     # Agrupar los datos por Descriptor (subsector)
-    grouped_data
+    grouped_data_subsectors = df.groupby("Descriptor").sum().reset_index()
+    st.write("Datos agrupados por subsectores:", grouped_data_subsectors)
