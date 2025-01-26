@@ -4,13 +4,12 @@ import plotly.express as px
 
 # Configuración inicial del título
 st.set_page_config(page_title="Cuesta Satélite de Cultura SHCP", layout="wide")
-st.title("Cuenta Satélite de Cultura SHCP - Entidades Federativas")
+st.title("Cuenta Satélite de Cultura SHCP")
 
 # Carga del archivo CSV desde la misma ubicación del programa
 csv_file = "conjunto_de_datos_cscm_csc_efacr_s2023_p.csv"
 df = pd.read_csv(csv_file)
 
-# Asumir que la primera fila tiene encabezados y se cargan correctamente
 # Renombrar la primera columna a "Descriptor"
 df = df.rename(columns={df.columns[0]: "Descriptor"})
 
@@ -18,11 +17,31 @@ df = df.rename(columns={df.columns[0]: "Descriptor"})
 descriptors = df["Descriptor"].dropna().unique()
 years = list(df.columns[1:])  # Ignorar la columna Descriptor
 
+# Inicializar el estado de sesión para los filtros
+if 'selected_descriptors' not in st.session_state:
+    st.session_state.selected_descriptors = descriptors[:1]
+if 'selected_years' not in st.session_state:
+    st.session_state.selected_years = years
+
 # Selección de filtros en la barra lateral
 st.sidebar.header("Configuración de visualización")
-selected_descriptors = st.sidebar.multiselect("Selecciona uno o más descriptores", descriptors, default=descriptors[:1])
-selected_years = st.sidebar.multiselect("Selecciona uno o más años", years, default=years)
+selected_descriptors = st.sidebar.multiselect("Selecciona uno o más descriptores", descriptors, default=st.session_state.selected_descriptors)
+selected_years = st.sidebar.multiselect("Selecciona uno o más años", years, default=st.session_state.selected_years)
 graph_type = st.sidebar.selectbox("Selecciona el tipo de gráfica", ["Barras", "Series de tiempo"])
+
+# Botón para limpiar filtros
+if st.sidebar.button("Limpiar Filtros"):
+    st.session_state.selected_descriptors = descriptors[:1]
+    st.session_state.selected_years = years
+    selected_descriptors = st.session_state.selected_descriptors
+    selected_years = st.session_state.selected_years
+
+# Botón para agrupar por años y subsectores
+if st.sidebar.button("Agrupar por Años y Subsectores"):
+    # Aquí puedes implementar la lógica para agrupar los datos
+    # Por ejemplo, podrías crear un nuevo DataFrame agrupado
+    grouped_data = df.groupby(['Descriptor'] + selected_years).sum().reset_index()
+    st.write("Datos agrupados:", grouped_data)
 
 # Filtrar datos
 filtered_data = df[df["Descriptor"].isin(selected_descriptors)]
