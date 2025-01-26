@@ -36,12 +36,17 @@ if st.sidebar.button("Limpiar Filtros"):
     selected_descriptors = st.session_state.selected_descriptors
     selected_years = st.session_state.selected_years
 
-# Botón para agrupar por años y subsectores
-if st.sidebar.button("Agrupar por Años y Subsectores"):
-    # Aquí puedes implementar la lógica para agrupar los datos
-    # Por ejemplo, podrías crear un nuevo DataFrame agrupado
-    grouped_data = df.groupby(['Descriptor'] + selected_years).sum().reset_index()
-    st.write("Datos agrupados:", grouped_data)
+# Botón para agrupar por años
+if st.sidebar.button("Agrupar por Años"):
+    # Agrupar los datos por años
+    grouped_data_years = df.groupby(selected_years).sum().reset_index()
+    st.write("Datos agrupados por años:", grouped_data_years)
+
+# Botón para agrupar por subsectores
+if st.sidebar.button("Agrupar por Subsectores"):
+    # Agrupar los datos por Descriptor (subsector)
+    grouped_data_subsectors = df.groupby("Descriptor").sum().reset_index()
+    st.write("Datos agrupados por subsectores:", grouped_data_subsectors)
 
 # Filtrar datos
 filtered_data = df[df["Descriptor"].isin(selected_descriptors)]
@@ -89,4 +94,5 @@ fig.update_layout(
 )
 
 # Mostrar la gráfica en Streamlit
+st.plotly_chart(fig, use_container_width=True)
 st.plotly_chart(fig, use_container_width=True)
