@@ -1,44 +1,73 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 
-# Cargar el archivo CSV
-@st.cache
-def load_data():
-    try:
-        data = pd.read_csv('conjunto_de_datos_cscm_csc_efacr_s2023_p.csv')  # Asegúrate de que el archivo CSV se llame 'data.csv'
-        return data
-    except Exception as e:
-        st.error(f"Error al cargar el archivo CSV: {e}")
-        return None
+# Configuración inicial del título
+st.set_page_config(page_title="Cuesta Satélite de Cultura SHCP", layout="wide")
+st.title("Cuesta Satélite de Cultura SHCP - Entidades Federativas")
 
-# Cargar los datos
-data = load_data()
+# Carga del archivo CSV desde la misma ubicación del programa
+csv_file = "conjunto_de_datos_cscm_csc_efacr_s2023_p.csv"
+df = pd.read_csv(csv_file)
 
-if data is not None:
-    # Mostrar los encabezados del CSV
-    st.write("Encabezados del CSV:", data.columns.tolist())
+# Asumir que la primera fila tiene encabezados y se cargan correctamente
+# Renombrar la primera columna a "Descriptor"
+df = df.rename(columns={df.columns[0]: "Descriptor"})
 
-    # Seleccionar un descriptor
-    descriptores = data.iloc[:, 0].unique()
-    descriptor_seleccionado = st.selectbox("Selecciona un descriptor:", descriptores)
+# Opciones disponibles
+descriptors = df["Descriptor"].dropna().unique()
+years = list(df.columns[1:])  # Ignorar la columna Descriptor
 
-    # Filtrar los datos por el descriptor seleccionado
-    data_filtrada = data[data.iloc[:, 0] == descriptor_seleccionado]
+# Selección de filtros en la barra lateral
+st.sidebar.header("Configuración de visualización")
+selected_descriptors = st.sidebar.multiselect("Selecciona uno o más descriptores", descriptors, default=descriptors[:1])
+selected_years = st.sidebar.multiselect("Selecciona uno o más años", years, default=years)
+graph_type = st.sidebar.selectbox("Selecciona el tipo de gráfica", ["Barras", "Series de tiempo"])
 
-    # Seleccionar un año
-    anios = data.columns[1:]  # Asumiendo que la primera columna es el descriptor
-    anio_seleccionado = st.selectbox("Selecciona un año:", anios)
+# Filtrar datos
+filtered_data = df[df["Descriptor"].isin(selected_descriptors)]
+filtered_data = filtered_data[["Descriptor"] + selected_years]
 
-    # Filtrar los datos por el año seleccionado
-    data_anio = data_filtrada[['Descriptor', anio_seleccionado]]  # Cambia 'Descriptor' por el nombre real de la columna
+# Transformar datos para visualización
+melted_data = filtered_data.melt(id_vars="Descriptor", var_name="Año", value_name="Valor")
 
-    # Graficar los datos
-    st.write(f"Datos para el descriptor '{descriptor_seleccionado}' en el año '{anio_seleccionado}':")
-    fig, ax = plt.subplots()
-    ax.bar(data_anio['Descriptor'], data_anio[anio_seleccionado], color='skyblue')
-    ax.set_xlabel('Descriptor')
-    ax.set_ylabel('Valor')
-    ax.set_title(f'Visualización de datos para {descriptor_seleccionado} en {anio_seleccionado}')
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+# Visualización
+st.subheader("Visualización de datos")
+if graph_type == "Barras":
+    fig = px.bar(
+        melted_data,
+        x="Año",
+        y="Valor",
+        color="Descriptor",
+        barmode="group",
+        title="Comparativa de datos",
+        hover_data={"Valor": True, "Año": True, "Descriptor": True},
+    )
+else:
+    fig = px.line(
+        melted_data,
+        x="Año",
+        y="Valor",
+        color="Descriptor",
+        title="Evolución de datos",
+        markers=True,
+        hover_data={"Valor": True, "Año": True, "Descriptor": True},
+    )
+
+# Configuración del diseño de la gráfica
+fig.update_layout(
+    xaxis_title="Año",
+    yaxis_title="Valor",
+    legend_title="Descriptor",
+    template="plotly_white",
+    legend=dict(
+        orientation="h",
+        yanchor="top",
+        y=-0.3,  # Mover la leyenda debajo de la gráfica
+        xanchor="center",
+        x=0.5
+    )
+)
+
+# Mostrar la gráfica en Streamlit
+st.plotly_chart(fig, use_container_width=True)
