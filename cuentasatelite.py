@@ -6,14 +6,9 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Cuesta Satélite de Cultura SHCP", layout="wide")
 st.title("Cuesta Satélite de Cultura SHCP - Entidades Federativas")
 
-# Cargar el archivo CSV
-@st.cache
-def load_data():
-    data = pd.read_csv('conjunto_de_datos_cscm_csc_efacr_s2023_p.csv')  # Asegúrate de que el archivo CSV se llame 'data.csv'
-    return data
-
-# Cargar los datos
-data = load_data()
+# Carga del archivo CSV desde la misma ubicación del programa
+csv_file = "conjunto_de_datos_cscm_csc_efacr_s2023_p.csv"
+df = pd.read_csv(csv_file)
 
 # Mostrar los encabezados del CSV
 st.write("Encabezados del CSV:", data.columns.tolist())
